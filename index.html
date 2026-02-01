@@ -20,9 +20,7 @@
         .hidden { display: none; }
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #ee4d2d; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #citySuggestions { text-align: left; border: 1px solid #eee; max-height: 120px; overflow-y: auto; position: absolute; background: white; width: 80%; z-index: 10; left: 10%; }
-        .suggestion-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #f9f9f9; font-size: 14px; color: #333; }
-        .suggestion-item:hover { background: #fff5f2; }
+        .info-kecil { font-size: 11px; color: #999; margin-top: -5px; margin-bottom: 10px; display: block; }
     </style>
 </head>
 <body>
@@ -57,10 +55,11 @@
             </select>
         </div>
 
-        <div id="stepCity" class="hidden" style="position: relative;">
-            <p style="font-size: 12px; color: #ee4d2d; margin-bottom: 5px;">Input kota untuk Gratis Ongkir lokasimu</p>
-            <input type="text" id="cityInput" placeholder="Ketik nama kota..." oninput="searchCity(this.value)">
-            <div id="citySuggestions"></div>
+        <div id="stepCity" class="hidden">
+            <p style="font-size: 12px; color: #ee4d2d; margin-bottom: 5px;">Input Kabupaten/Kota Pengiriman</p>
+            <input type="text" id="cityInput" placeholder="Contoh: Lampung Utara" autocomplete="off">
+            <span class="info-kecil">*Ketik manual nama Kabupaten/Kota Anda</span>
+            <button class="btn-shopee" onclick="selectCityManual()">LANJUTKAN</button>
         </div>
     </div>
 
@@ -87,11 +86,8 @@
     const SUPABASE_KEY = "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR";
     const VAPID_KEY = "BPVouVO9zg4a1ZZ81K02MjTA5mgc-mxExWNaALL1PsBevaUHJ-WnKykmUJogmH26TtX9S5c9wHbpZ9uaRfnKY68";
 
-    // Inisialisasi dengan pengecekan
     firebase.initializeApp(firebaseConfig);
     const messaging = firebase.messaging();
-    
-    // Perbaikan: Gunakan nama variabel unik untuk client
     const mySupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let userData = { gender: '', age: '', city: '', token: '' };
@@ -128,27 +124,13 @@
         }
     }
 
-    const cities = ["Jakarta", "Surabaya", "Bandung", "Medan", "Semarang", "Makassar", "Palembang", "Tangerang", "Bekasi", "Depok", "Bogor", "Malang", "Yogyakarta", "Solo", "Denpasar", "Palembang", "Banjarmasin", "Balikpapan", "Pontianak", "Samarinda", "Manado", "Ambon", "Jayapura", "Mataram", "Kupang"];
-
-    function searchCity(query) {
-        const suggBox = document.getElementById('citySuggestions');
-        suggBox.innerHTML = '';
-        if (query.length < 2) return;
-
-        const filtered = cities.filter(c => c.toLowerCase().includes(query.toLowerCase()));
-        filtered.forEach(city => {
-            const div = document.createElement('div');
-            div.className = 'suggestion-item';
-            div.innerText = city;
-            div.onclick = () => selectCity(city);
-            suggBox.appendChild(div);
-        });
-    }
-
-    async function selectCity(city) {
-        userData.city = city;
-        document.getElementById('cityInput').value = city;
-        document.getElementById('citySuggestions').innerHTML = '';
+    async function selectCityManual() {
+        const cityVal = document.getElementById('cityInput').value;
+        if (cityVal.length < 3) {
+            alert("Silakan masukkan nama Kabupaten/Kota dengan benar.");
+            return;
+        }
+        userData.city = cityVal;
         await finalizeSubscription();
     }
 
@@ -160,7 +142,6 @@
                 const token = await messaging.getToken({ vapidKey: VAPID_KEY });
                 if (token) {
                     userData.token = token;
-                    // Gunakan variabel client yang sudah diperbaiki
                     await mySupabase.from('subscribers').upsert([userData], { onConflict: 'token' });
                     localStorage.setItem('shopee_subbed', 'true');
                 }
