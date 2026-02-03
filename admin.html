@@ -6,6 +6,7 @@
     <title>Shopee Admin | Broadcast</title>
     <link rel="manifest" href="admin-manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         :root { --shopee-orange: #ee4d2d; }
         body { font-family: sans-serif; background-color: #f5f5f5; margin: 0; padding: 15px; }
@@ -15,8 +16,17 @@
         .stat-box { background: white; padding: 10px; border-radius: 8px; flex: 1; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .stat-box b { color: var(--shopee-orange); font-size: 18px; display: block; }
         label { display: block; font-size: 13px; font-weight: bold; margin: 10px 0 5px; color: #555; }
-        select, input, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ddd; font-size: 14px; box-sizing: border-box; }
-        .btn-send { background-color: var(--shopee-orange); color: white; border: none; font-weight: bold; cursor: pointer; padding: 15px; width: 100%; border-radius: 5px; font-size: 16px; }
+        select, input, textarea {
+            width: 100%; padding: 12px; margin-bottom: 10px;
+            border-radius: 4px; border: 1px solid #ddd;
+            font-size: 14px; box-sizing: border-box;
+        }
+        .btn-send {
+            background-color: var(--shopee-orange);
+            color: white; border: none; font-weight: bold;
+            cursor: pointer; padding: 15px;
+            width: 100%; border-radius: 5px; font-size: 16px;
+        }
         #log { font-size: 12px; color: #888; text-align: center; margin-top: 10px; }
     </style>
 </head>
@@ -25,8 +35,8 @@
 <div class="header">SHOPEE BROADCAST PANEL</div>
 
 <div class="stats">
-    <div class="stat-box"><b id="totalSub">0</b> <small>Total User</small></div>
-    <div class="stat-box"><b id="targetCount">0</b> <small>Target</small></div>
+    <div class="stat-box"><b id="totalSub">0</b><small>Total User</small></div>
+    <div class="stat-box"><b id="targetCount">0</b><small>Target</small></div>
 </div>
 
 <div class="card">
@@ -64,78 +74,99 @@
 </div>
 
 <script>
-    // Password Admin
-    const pass = prompt("Masukkan Password Admin:");
-    if (pass !== "shopee123") {
-        alert("Akses Ditolak!");
-        window.location.href = "index.html";
-    }
+/* ================== ADMIN AUTH ================== */
+const pass = prompt("Masukkan Password Admin:");
+if (pass !== "shopee123") {
+    alert("Akses Ditolak!");
+    location.href = "index.html";
+}
 
-    // SUPABASE (Sama dengan index.html)
-    const mySupabase = supabase.createClient(
-        "https://zscupvelldysboqatuee.supabase.co",
-        "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR"
+/* ================== SUPABASE ================== */
+const mySupabase = supabase.createClient(
+    "https://zscupvelldysboqatuee.supabase.co",
+    "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR"
+);
+
+let allUsers = [];
+
+/* ================== LOAD DATA ================== */
+async function loadData() {
+    const { data } = await mySupabase.from('subscriber').select('*');
+    if (data) {
+        allUsers = data;
+        document.getElementById('totalSub').innerText = data.length;
+        applyFilters();
+    }
+}
+
+/* ================== FILTER ================== */
+function applyFilters() {
+    const g = genderFilter.value;
+    const a = ageFilter.value;
+
+    const filtered = allUsers.filter(u =>
+        (g === 'all' || u.gender === g) &&
+        (a === 'all' || u.age === a) &&
+        u.token
     );
 
-    let allUsers = [];
+    targetCount.innerText = filtered.length;
+    return filtered;
+}
 
-    async function loadData() {
-        const { data, error } = await mySupabase.from('subscriber').select('*');
-        if (data) {
-            allUsers = data;
-            document.getElementById('totalSub').innerText = allUsers.length;
-            applyFilters();
-        }
+/* ================== BROADCAST VIA GAS ================== */
+async function broadcast() {
+    const targets = applyFilters();
+    const title = document.getElementById('title').value.trim();
+    const body  = document.getElementById('body').value.trim();
+    const image = document.getElementById('imgUrl').value.trim();
+    const link  = document.getElementById('affLink').value.trim();
+
+    if (!title || !body || !link) {
+        return alert("Judul, pesan, dan link WAJIB diisi.");
     }
-
-    function applyFilters() {
-        const g = document.getElementById('genderFilter').value;
-        const a = document.getElementById('ageFilter').value;
-        const filtered = allUsers.filter(u => (g === 'all' || u.gender === g) && (a === 'all' || u.age === a));
-        document.getElementById('targetCount').innerText = filtered.length;
-        return filtered;
+    if (targets.length === 0) {
+        return alert("Tidak ada user dalam target.");
     }
+    if (!confirm(`Kirim notifikasi ke ${targets.length} user?`)) return;
 
-    async function broadcast() {
-        const targets = applyFilters();
-        const title = document.getElementById('title').value;
-        const body = document.getElementById('body').value;
-        const image = document.getElementById('imgUrl').value;
-        const link = document.getElementById('affLink').value;
+    let success = 0;
+    log.innerText = "Mengirim broadcast...";
 
-        if (!title || !body || !link) return alert("Mohon lengkapi judul, pesan, dan link!");
-        if (targets.length === 0) return alert("Tidak ada user dalam target ini.");
+    for (const user of targets) {
+        try {
+            const res = await fetch(
+              "https://script.google.com/macros/s/AKfycbwnrXAf7zZKjvawplDH_yqAkYuoXs8WIz6PS3b2tmjYHs0faY0DmdFqd8fl4tY-WRTR/exec",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    token: user.token,
+                    title,
+                    body,
+                    image,
+                    link
+                })
+              }
+            );
 
-        if (!confirm(`Kirim notifikasi ke ${targets.length} user?`)) return;
+            const json = await res.json();
+            console.log("GAS:", json);
 
-        let success = 0;
-        document.getElementById('log').innerText = "Memulai broadcast...";
-
-        for (const user of targets) {
-            if (!user.token) continue;
-            try {
-                // KIRIM KE FIREBASE API (Legacy)
-                await fetch('https://fcm.googleapis.com/fcm/send', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'key=AIzaSyBGAAjUXnJA7RkaiYKo9XeWK1hcgewEgM0' // GANTI DENGAN SERVER KEY LEGACY ANDA
-                    },
-                    body: JSON.stringify({
-                        to: user.token,
-                        notification: { title, body, image, click_action: link },
-                        data: { url: link },
-                        priority: "high"
-                    })
-                });
+            if (!json.error) {
                 success++;
-                document.getElementById('log').innerText = `Terkirim: ${success} / ${targets.length}`;
-            } catch (e) { console.error("Gagal kirim ke 1 user"); }
+                log.innerText = `Terkirim ${success} / ${targets.length}`;
+            }
+        } catch (e) {
+            console.error("Gagal kirim:", e);
         }
-        alert(`Broadcast Selesai! Berhasil terkirim ke ${success} user.`);
     }
 
-    loadData();
+    alert(`Broadcast selesai. Berhasil terkirim ke ${success} user.`);
+}
+
+/* ================== INIT ================== */
+loadData();
 </script>
 </body>
 </html>
