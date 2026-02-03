@@ -1,171 +1,133 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shopee Admin | Broadcast</title>
-    <link rel="manifest" href="admin-manifest.json">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopee Admin | Broadcast</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <style>
-        :root { --shopee-orange: #ee4d2d; }
-        body { font-family: sans-serif; background-color: #f5f5f5; margin: 0; padding: 15px; }
-        .header { background: var(--shopee-orange); color: white; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 15px; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        .stats { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
-        .stat-box { background: white; padding: 10px; border-radius: 8px; flex: 1; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .stat-box b { color: var(--shopee-orange); font-size: 18px; display: block; }
-        label { display: block; font-size: 13px; font-weight: bold; margin: 10px 0 5px; color: #555; }
-        select, input, textarea {
-            width: 100%; padding: 12px; margin-bottom: 10px;
-            border-radius: 4px; border: 1px solid #ddd;
-            font-size: 14px; box-sizing: border-box;
-        }
-        .btn-send {
-            background-color: var(--shopee-orange);
-            color: white; border: none; font-weight: bold;
-            cursor: pointer; padding: 15px;
-            width: 100%; border-radius: 5px; font-size: 16px;
-        }
-        #log { font-size: 12px; color: #888; text-align: center; margin-top: 10px; }
-    </style>
+  <style>
+    :root { --shopee-orange:#ee4d2d; }
+    body { font-family:sans-serif; background:#f5f5f5; margin:0; padding:15px; }
+    .header { background:var(--shopee-orange); color:#fff; padding:15px; border-radius:8px; text-align:center; font-weight:bold; margin-bottom:15px; }
+    .card { background:#fff; padding:20px; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,.1); margin-bottom:15px; }
+    .stats { display:flex; gap:10px; margin-bottom:15px; }
+    .stat-box { flex:1; background:#fff; padding:10px; border-radius:8px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,.05); }
+    .stat-box b { color:var(--shopee-orange); font-size:18px; display:block; }
+    label { font-size:13px; font-weight:bold; color:#555; }
+    select,input,textarea { width:100%; padding:12px; margin:8px 0; border:1px solid #ddd; border-radius:4px; }
+    button { background:var(--shopee-orange); color:#fff; border:none; padding:15px; width:100%; font-weight:bold; border-radius:5px; cursor:pointer; }
+    #log { font-size:12px; text-align:center; color:#777; margin-top:10px; }
+  </style>
 </head>
 <body>
 
 <div class="header">SHOPEE BROADCAST PANEL</div>
 
 <div class="stats">
-    <div class="stat-box"><b id="totalSub">0</b><small>Total User</small></div>
-    <div class="stat-box"><b id="targetCount">0</b><small>Target</small></div>
+  <div class="stat-box"><b id="totalSub">0</b>Total User</div>
+  <div class="stat-box"><b id="targetCount">0</b>Target</div>
 </div>
 
 <div class="card">
-    <label>🎯 Filter Gender</label>
-    <select id="genderFilter" onchange="applyFilters()">
-        <option value="all">Semua Gender</option>
-        <option value="pria">Pria</option>
-        <option value="wanita">Wanita</option>
-    </select>
+  <label>Gender</label>
+  <select id="genderFilter" onchange="applyFilters()">
+    <option value="all">Semua</option>
+    <option value="pria">Pria</option>
+    <option value="wanita">Wanita</option>
+  </select>
 
-    <label>📅 Filter Usia</label>
-    <select id="ageFilter" onchange="applyFilters()">
-        <option value="all">Semua Usia</option>
-        <option value="18-25">18-25 Tahun</option>
-        <option value="26-35">26-35 Tahun</option>
-        <option value="36+">Diatas 35 Tahun</option>
-    </select>
+  <label>Usia</label>
+  <select id="ageFilter" onchange="applyFilters()">
+    <option value="all">Semua</option>
+    <option value="18-25">18-25</option>
+    <option value="26-35">26-35</option>
+    <option value="36+">36+</option>
+  </select>
 </div>
 
 <div class="card">
-    <label>Judul Notifikasi</label>
-    <input type="text" id="title" placeholder="Contoh: Voucher Diskon 99%!">
+  <label>Judul</label>
+  <input id="title">
 
-    <label>Isi Pesan</label>
-    <textarea id="body" rows="3" placeholder="Contoh: Ambil gratis ongkir sekarang..."></textarea>
+  <label>Pesan</label>
+  <textarea id="body"></textarea>
 
-    <label>Link Gambar (URL)</label>
-    <input type="text" id="imgUrl" placeholder="https://domain.com/gambar.jpg">
+  <label>Link Gambar</label>
+  <input id="imgUrl">
 
-    <label>Link Affiliate Shopee</label>
-    <input type="text" id="affLink" placeholder="https://shope.ee/xxxxxx">
+  <label>Link Shopee</label>
+  <input id="affLink">
 
-    <button class="btn-send" onclick="broadcast()">KIRIM SEKARANG</button>
-    <div id="log">Siap mengirim...</div>
+  <button onclick="broadcast()">KIRIM</button>
+  <div id="log">Siap</div>
 </div>
 
 <script>
-/* ================== ADMIN AUTH ================== */
-const pass = prompt("Masukkan Password Admin:");
-if (pass !== "shopee123") {
-    alert("Akses Ditolak!");
-    location.href = "index.html";
-}
+const pass = prompt("Password Admin:");
+if(pass!=="shopee123"){ alert("Ditolak"); location.href="index.html"; }
 
-/* ================== SUPABASE ================== */
-const mySupabase = supabase.createClient(
-    "https://zscupvelldysboqatuee.supabase.co",
-    "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR"
+const supa = supabase.createClient(
+  "https://zscupvelldysboqatuee.supabase.co",
+  "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR"
 );
 
-let allUsers = [];
+let users=[];
 
-/* ================== LOAD DATA ================== */
-async function loadData() {
-    const { data } = await mySupabase.from('subscriber').select('*');
-    if (data) {
-        allUsers = data;
-        document.getElementById('totalSub').innerText = data.length;
-        applyFilters();
-    }
+async function loadData(){
+  const {data}=await supa.from('subscriber').select('*');
+  users=data||[];
+  totalSub.innerText=users.length;
+  applyFilters();
 }
 
-/* ================== FILTER ================== */
-function applyFilters() {
-    const g = genderFilter.value;
-    const a = ageFilter.value;
-
-    const filtered = allUsers.filter(u =>
-        (g === 'all' || u.gender === g) &&
-        (a === 'all' || u.age === a) &&
-        u.token
-    );
-
-    targetCount.innerText = filtered.length;
-    return filtered;
+function applyFilters(){
+  const g=genderFilter.value;
+  const a=ageFilter.value;
+  const f=users.filter(u=>
+    u.token &&
+    (g==="all"||u.gender===g) &&
+    (a==="all"||u.age===a)
+  );
+  targetCount.innerText=f.length;
+  return f;
 }
 
-/* ================== BROADCAST VIA GAS ================== */
-async function broadcast() {
-    const targets = applyFilters();
-    const title = document.getElementById('title').value.trim();
-    const body  = document.getElementById('body').value.trim();
-    const image = document.getElementById('imgUrl').value.trim();
-    const link  = document.getElementById('affLink').value.trim();
+async function broadcast(){
+  const targets=applyFilters();
+  if(!targets.length) return alert("Target kosong");
 
-    if (!title || !body || !link) {
-        return alert("Judul, pesan, dan link WAJIB diisi.");
-    }
-    if (targets.length === 0) {
-        return alert("Tidak ada user dalam target.");
-    }
-    if (!confirm(`Kirim notifikasi ke ${targets.length} user?`)) return;
+  const title=titleInput();
+  const body=bodyInput();
+  const image=imgUrl.value;
+  const link=affLink.value;
 
-    let success = 0;
-    log.innerText = "Mengirim broadcast...";
+  let ok=0;
+  log.innerText="Mengirim...";
 
-    for (const user of targets) {
-        try {
-            const res = await fetch(
-              "https://script.google.com/macros/s/AKfycbwnrXAf7zZKjvawplDH_yqAkYuoXs8WIz6PS3b2tmjYHs0faY0DmdFqd8fl4tY-WRTR/exec",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    token: user.token,
-                    title,
-                    body,
-                    image,
-                    link
-                })
-              }
-            );
+  for(const u of targets){
+    const p=new URLSearchParams();
+    p.append("token",u.token);
+    p.append("title",title);
+    p.append("body",body);
+    p.append("image",image);
+    p.append("link",link);
 
-            const json = await res.json();
-            console.log("GAS:", json);
-
-            if (!json.error) {
-                success++;
-                log.innerText = `Terkirim ${success} / ${targets.length}`;
-            }
-        } catch (e) {
-            console.error("Gagal kirim:", e);
-        }
-    }
-
-    alert(`Broadcast selesai. Berhasil terkirim ke ${success} user.`);
+    try{
+      await fetch("https://script.google.com/macros/s/AKfycbwnrXAf7zZKjvawplDH_yqAkYuoXs8WIz6PS3b2tmjYHs0faY0DmdFqd8fl4tY-WRTR/exec",{
+        method:"POST",
+        body:p
+      });
+      ok++;
+      log.innerText=`Terkirim ${ok}/${targets.length}`;
+    }catch(e){console.log(e);}
+  }
+  alert("Selesai: "+ok);
 }
 
-/* ================== INIT ================== */
+function titleInput(){return document.getElementById("title").value;}
+function bodyInput(){return document.getElementById("body").value;}
+
 loadData();
 </script>
 </body>
