@@ -1,0 +1,16 @@
+{
+  "name": "Shopee Admin Panel",
+  "short_name": "S-Admin",
+  "start_url": "admin.html",
+  "display": "standalone",
+  "background_color": "#f5f5f5",
+  "theme_color": "#ee4d2d",
+  "icons": [
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Shopee.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
