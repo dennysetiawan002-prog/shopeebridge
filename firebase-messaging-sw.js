@@ -1,20 +1,19 @@
 self.addEventListener('push', function (event) {
-  console.log('[SW] push diterima');
-
   let data = {};
   try {
     data = event.data ? event.data.json() : {};
   } catch (e) {
-    // fallback kalau bukan JSON
-    data = { title: 'TEST PUSH', body: event.data.text() };
+    data = {};
   }
 
-  const title = data.title || 'Notifikasi';
+  const title = data.title || 'Promo Shopee';
   const options = {
-    body: data.body || 'Push berhasil',
+    body: data.body || '',
     icon: '/icon-192.png',
+    image: data.image || undefined,
     data: {
-      url: data.url || '/'
+      product_id: data.product_id || '',
+      link: data.link || ''
     }
   };
 
@@ -25,7 +24,15 @@ self.addEventListener('push', function (event) {
 
 self.addEventListener('notificationclick', function (event) {
   event.notification.close();
+
+  const pid = event.notification.data.product_id;
+  const fallback = event.notification.data.link || 'https://shopee.co.id';
+
+  const landingUrl = pid
+    ? `/landing.html?pid=${encodeURIComponent(pid)}`
+    : fallback;
+
   event.waitUntil(
-    clients.openWindow(event.notification.data.url)
+    clients.openWindow(landingUrl)
   );
 });
