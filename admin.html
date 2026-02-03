@@ -21,7 +21,6 @@
             color: #333;
         }
 
-        /* Header Shopee Style */
         .navbar {
             background: #fff;
             padding: 10px 20px;
@@ -33,12 +32,11 @@
             z-index: 100;
         }
 
-        .navbar img { height: 32px; margin-right: 15px; }
+        .navbar img { height: 30px; margin-right: 15px; }
         .navbar span { font-size: 18px; color: var(--shopee-orange); font-weight: 500; }
 
         .container { max-width: 500px; margin: 20px auto; padding: 0 15px; }
 
-        /* Statistik Box */
         .stats-container {
             display: flex;
             gap: 10px;
@@ -54,26 +52,27 @@
             border: 1px solid var(--border-color);
         }
 
-        .stat-card b { display: block; font-size: 20px; color: var(--shopee-orange); }
+        .stat-card b { display: block; font-size: 22px; color: var(--shopee-orange); }
         .stat-card small { color: var(--text-gray); font-size: 12px; }
 
-        /* Form Card */
         .card { 
             background: #fff; 
             padding: 24px; 
             border-radius: 4px; 
             box-shadow: 0 1px 4px rgba(0,0,0,.05);
+            border: 1px solid var(--border-color);
         }
 
         .card-title {
             font-size: 16px;
-            font-weight: 500;
+            font-weight: bold;
             margin-bottom: 20px;
+            color: #333;
             border-left: 4px solid var(--shopee-orange);
-            padding-left: 10px;
+            padding-left: 12px;
         }
 
-        .form-group { margin-bottom: 18px; }
+        .form-group { margin-bottom: 20px; }
 
         label { 
             display: block; 
@@ -83,37 +82,39 @@
             font-weight: 500;
         }
 
-        input, textarea, select { 
+        input, textarea { 
             width: 100%; 
             padding: 12px; 
             border: 1px solid var(--border-color); 
-            border-radius: 2px;
+            border-radius: 4px;
             font-size: 14px;
             box-sizing: border-box;
             outline: none;
-            transition: border 0.3s;
+            background-color: #fafafa;
         }
 
-        input:focus, textarea:focus { border-color: var(--shopee-orange); }
+        input:focus, textarea:focus { 
+            border-color: var(--shopee-orange); 
+            background-color: #fff;
+        }
 
-        textarea { resize: vertical; min-height: 80px; }
+        textarea { resize: vertical; min-height: 100px; }
 
         button { 
             background: var(--shopee-orange); 
             color: #fff; 
             border: none; 
-            padding: 14px; 
+            padding: 15px; 
             width: 100%; 
             font-weight: bold; 
-            border-radius: 2px;
+            border-radius: 4px;
             font-size: 16px;
             cursor: pointer;
-            transition: background 0.3s;
-            margin-top: 10px;
+            transition: 0.2s;
         }
 
         button:hover { background: #d73211; }
-        button:active { transform: scale(0.99); }
+        button:active { transform: scale(0.98); }
 
         #log { 
             text-align: center; 
@@ -123,13 +124,6 @@
             padding: 10px;
             background: #f9f9f9;
             border-radius: 4px;
-        }
-
-        .footer-info {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 12px;
-            color: #bbb;
         }
     </style>
 </head>
@@ -143,8 +137,7 @@
 
 <div class="container">
     <div class="stats-container">
-        <div class="stat-card"><b id="countUser">0</b><small>Total Subscriber</small></div>
-        <div class="stat-card"><b id="countTarget">0</b><small>Target Aktif</small></div>
+        <div class="stat-card"><b id="countTarget">0</b><small>Total Target</small></div>
     </div>
 
     <div class="card">
@@ -152,95 +145,79 @@
         
         <div class="form-group">
             <label>Judul Notifikasi</label>
-            <input id="title" placeholder="Contoh: Voucher Diskon 99% Menantimu!">
+            <input id="title" placeholder="Contoh: Diskon Gila 99%!">
         </div>
 
         <div class="form-group">
             <label>Isi Pesan</label>
-            <textarea id="body" placeholder="Masukkan detail promo yang menarik..."></textarea>
+            <textarea id="body" placeholder="Masukkan pesan promo yang menarik..."></textarea>
         </div>
 
         <div class="form-group">
-            <label>Link Tujuan (Shopee Affiliate)</label>
+            <label>Link Affiliate Shopee</label>
             <input id="link" placeholder="https://shope.ee/xxxxxx">
         </div>
 
-        <button onclick="broadcast()">KIRIM BROADCAST</button>
-        <div id="log">Status: Menunggu instruksi...</div>
+        <button onclick="broadcast()">KIRIM SEKARANG</button>
+        <div id="log">Status: Menunggu...</div>
     </div>
-
-    <div class="footer-info">Shopee Admin Panel v2.0 - 2026</div>
 </div>
 
 <script>
-// SERVICE WORKER
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/shopeebridge/firebase-messaging-sw.js', { scope: '/shopeebridge/' })
-  .then(() => console.log('SW Registered')).catch(err => console.error('SW Error:', err));
-}
+    const supa = supabase.createClient(
+        "https://zscupvelldysboqatuee.supabase.co",
+        "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR"
+    );
 
-// SUPABASE
-const supa = supabase.createClient(
-  "https://zscupvelldysboqatuee.supabase.co",
-  "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR"
-);
+    // GANTI DENGAN URL DEPLOYMENT GAS ANDA
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwnrXAf7zZKjvawplDH_yqAkYuoXs8WIz6PS3b2tmjYHs0faY0DmdFqd8fl4tY-WRTR/exec";
 
-// LOAD STATS
-async function loadStats() {
-    const { data } = await supa.from('subscriber').select('token').neq('token','');
-    if(data) {
-        countUser.innerText = data.length;
-        countTarget.innerText = data.length;
+    async function loadStats() {
+        const { data } = await supa.from('subscriber').select('token').neq('token','');
+        if(data) document.getElementById('countTarget').innerText = data.length;
     }
-}
-loadStats();
+    loadStats();
 
-// BROADCAST
-async function broadcast() {
-    const titleVal = document.getElementById('title').value;
-    const bodyVal = document.getElementById('body').value;
-    const linkVal = document.getElementById('link').value;
+    async function broadcast() {
+        const titleVal = document.getElementById('title').value;
+        const bodyVal = document.getElementById('body').value;
+        const inputLink = document.getElementById('link').value;
+        const logDiv = document.getElementById('log');
 
-    if(!titleVal || !bodyVal || !linkVal) {
-        alert("Mohon isi semua data!");
-        return;
-    }
+        if(!titleVal || !bodyVal || !inputLink) return alert("Mohon lengkapi semua data!");
 
-    const { data } = await supa.from('subscriber').select('token').neq('token','');
+        // OTOMATIS GABUNG LINK BRIDGE
+        const finalLink = "https://dennysetiawan002-prog.github.io/shopeebridge/?url=" + encodeURIComponent(inputLink);
 
-    if(!data || !data.length){
-        alert("Tidak ada user untuk dikirim.");
-        return;
-    }
+        const { data } = await supa.from('subscriber').select('token').neq('token','');
+        if(!data || data.length === 0) return alert("Tidak ada token ditemukan!");
 
-    if(!confirm(`Kirim broadcast ke ${data.length} user?`)) return;
+        if(!confirm(`Kirim broadcast ke ${data.length} user?`)) return;
 
-    let success = 0;
-    const logDiv = document.getElementById('log');
-    logDiv.innerText = "⏳ Sedang memproses pengiriman...";
+        let success = 0;
+        logDiv.innerText = "⏳ Sedang memproses...";
 
-    for(const u of data) {
-        const p = new URLSearchParams();
-        p.append("token", u.token);
-        p.append("title", titleVal);
-        p.append("body", bodyVal);
-        p.append("link", linkVal);
+        for(const u of data) {
+            const formData = new URLSearchParams();
+            formData.append("token", u.token);
+            formData.append("title", titleVal);
+            formData.append("body", bodyVal);
+            formData.append("link", finalLink);
 
-        try {
-            await fetch(
-                "https://script.google.com/macros/s/AKfycbwnrXAf7zZKjvawplDH_yqAkYuoXs8WIz6PS3b2tmjYHs0faY0DmdFqd8fl4tY-WRTR/exec",
-                { method: "POST", mode: "no-cors", body: p }
-            );
-            success++;
-            logDiv.innerText = `🚀 Terkirim: ${success} dari ${data.length}`;
-        } catch(e) {
-            console.error("Gagal kirim ke salah satu user");
+            try {
+                await fetch(GAS_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    body: formData
+                });
+                success++;
+                logDiv.innerText = `🚀 Terproses: ${success} / ${data.length}`;
+            } catch(e) { console.error(e); }
         }
-    }
 
-    alert("✅ Broadcast Selesai! Total: " + success + " user.");
-    logDiv.innerText = "Status: Broadcast Selesai (" + success + ")";
-}
+        alert("Broadcast Selesai!");
+        logDiv.innerText = "Status: Selesai (" + success + " terproses)";
+    }
 </script>
 
 </body>
