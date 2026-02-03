@@ -1,134 +1,77 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shopee Admin | Broadcast</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shopee Admin | Broadcast</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <style>
-    :root { --shopee-orange:#ee4d2d; }
-    body { font-family:sans-serif; background:#f5f5f5; margin:0; padding:15px; }
-    .header { background:var(--shopee-orange); color:#fff; padding:15px; border-radius:8px; text-align:center; font-weight:bold; margin-bottom:15px; }
-    .card { background:#fff; padding:20px; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,.1); margin-bottom:15px; }
-    .stats { display:flex; gap:10px; margin-bottom:15px; }
-    .stat-box { flex:1; background:#fff; padding:10px; border-radius:8px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,.05); }
-    .stat-box b { color:var(--shopee-orange); font-size:18px; display:block; }
-    label { font-size:13px; font-weight:bold; color:#555; }
-    select,input,textarea { width:100%; padding:12px; margin:8px 0; border:1px solid #ddd; border-radius:4px; }
-    button { background:var(--shopee-orange); color:#fff; border:none; padding:15px; width:100%; font-weight:bold; border-radius:5px; cursor:pointer; }
-    #log { font-size:12px; text-align:center; color:#777; margin-top:10px; }
-  </style>
+<style>
+:root { --shopee:#ee4d2d; }
+body{font-family:sans-serif;background:#f5f5f5;margin:0;padding:15px}
+.header{background:var(--shopee);color:#fff;padding:15px;border-radius:8px;text-align:center;font-weight:bold}
+.card{background:#fff;padding:20px;border-radius:8px;margin-top:15px}
+button{background:var(--shopee);color:#fff;border:none;padding:15px;width:100%;font-weight:bold;border-radius:5px}
+select,input,textarea{width:100%;padding:12px;margin:8px 0}
+#log{text-align:center;font-size:12px;color:#777}
+</style>
 </head>
+
 <body>
 
 <div class="header">SHOPEE BROADCAST PANEL</div>
 
-<div class="stats">
-  <div class="stat-box"><b id="totalSub">0</b>Total User</div>
-  <div class="stat-box"><b id="targetCount">0</b>Target</div>
-</div>
-
 <div class="card">
-  <label>Gender</label>
-  <select id="genderFilter" onchange="applyFilters()">
-    <option value="all">Semua</option>
-    <option value="pria">Pria</option>
-    <option value="wanita">Wanita</option>
-  </select>
+<label>Judul</label>
+<input id="title">
 
-  <label>Usia</label>
-  <select id="ageFilter" onchange="applyFilters()">
-    <option value="all">Semua</option>
-    <option value="18-25">18-25</option>
-    <option value="26-35">26-35</option>
-    <option value="36+">36+</option>
-  </select>
-</div>
+<label>Pesan</label>
+<textarea id="body"></textarea>
 
-<div class="card">
-  <label>Judul</label>
-  <input id="title">
+<label>Link</label>
+<input id="link">
 
-  <label>Pesan</label>
-  <textarea id="body"></textarea>
-
-  <label>Link Gambar</label>
-  <input id="imgUrl">
-
-  <label>Link Shopee</label>
-  <input id="affLink">
-
-  <button onclick="broadcast()">KIRIM</button>
-  <div id="log">Siap</div>
+<button onclick="broadcast()">KIRIM</button>
+<div id="log">Siap</div>
 </div>
 
 <script>
-const pass = prompt("Password Admin:");
-if(pass!=="shopee123"){ alert("Ditolak"); location.href="index.html"; }
-
 const supa = supabase.createClient(
-  "https://zscupvelldysboqatuee.supabase.co",
-  "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR"
+ "https://zscupvelldysboqatuee.supabase.co",
+ "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR"
 );
 
-let users=[];
-
-async function loadData(){
-  const {data}=await supa.from('subscriber').select('*');
-  users=data||[];
-  totalSub.innerText=users.length;
-  applyFilters();
-}
-
-function applyFilters(){
-  const g=genderFilter.value;
-  const a=ageFilter.value;
-  const f=users.filter(u=>
-    u.token &&
-    (g==="all"||u.gender===g) &&
-    (a==="all"||u.age===a)
-  );
-  targetCount.innerText=f.length;
-  return f;
-}
-
 async function broadcast(){
-  const targets=applyFilters();
-  if(!targets.length) return alert("Target kosong");
+ const { data } = await supa.from('subscriber').select('token').neq('token','');
+ if(!data || !data.length) return alert("Tidak ada token");
 
-  const title=titleInput();
-  const body=bodyInput();
-  const image=imgUrl.value;
-  const link=affLink.value;
+ let success = 0;
+ log.innerText = "Mengirim...";
 
-  let ok=0;
-  log.innerText="Mengirim...";
+ for(const u of data){
+   const p = new URLSearchParams();
+   p.append("token", u.token);
+   p.append("title", title.value);
+   p.append("body", body.value);
+   p.append("link", link.value);
 
-  for(const u of targets){
-    const p=new URLSearchParams();
-    p.append("token",u.token);
-    p.append("title",title);
-    p.append("body",body);
-    p.append("image",image);
-    p.append("link",link);
+   try{
+     // ⬇️ INI KUNCI UTAMANYA
+     fetch(
+       "https://script.google.com/macros/s/AKfycbwnrXAf7zZKjvawplDH_yqAkYuoXs8WIz6PS3b2tmjYHs0faY0DmdFqd8fl4tY-WRTR/exec",
+       {
+         method: "POST",
+         mode: "no-cors",
+         body: p
+       }
+     );
+     success++;
+     log.innerText = "Terkirim: " + success;
+   }catch(e){}
+ }
 
-    try{
-      await fetch("https://script.google.com/macros/s/AKfycbwnrXAf7zZKjvawplDH_yqAkYuoXs8WIz6PS3b2tmjYHs0faY0DmdFqd8fl4tY-WRTR/exec",{
-        method:"POST",
-        body:p
-      });
-      ok++;
-      log.innerText=`Terkirim ${ok}/${targets.length}`;
-    }catch(e){console.log(e);}
-  }
-  alert("Selesai: "+ok);
+ alert("Broadcast selesai. Dikirim: " + success);
 }
-
-function titleInput(){return document.getElementById("title").value;}
-function bodyInput(){return document.getElementById("body").value;}
-
-loadData();
 </script>
 </body>
 </html>
