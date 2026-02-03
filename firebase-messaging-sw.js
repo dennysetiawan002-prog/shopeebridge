@@ -11,3 +11,33 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
+
+/**
+ * ⬇️ INI KUNCI UTAMA
+ * Tangani PUSH SENDIRI
+ */
+messaging.onBackgroundMessage(function(payload) {
+  console.log('[SW] Push diterima:', payload);
+
+  const title = payload.data?.title || 'Promo Shopee';
+  const options = {
+    body: payload.data?.body || '',
+    icon: '/icon-192.png',
+    data: {
+      url: payload.data?.url || 'https://shopee.co.id'
+    }
+  };
+
+  self.registration.showNotification(title, options);
+});
+
+/**
+ * Klik notif → buka link
+ */
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  const url = event.notification.data.url;
+  event.waitUntil(
+    clients.openWindow(url)
+  );
+});
