@@ -3,112 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Admin Broadcast | Shopee</title>
+    <title>Shopee Admin | Broadcast</title>
     <link rel="manifest" href="admin-manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --shopee-red: #ee4d2d; --bg: #f5f5f5; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .header { background: var(--shopee-red); color: white; padding: 20px; text-align: center; font-weight: bold; border-radius: 0 0 15px 15px; margin: -15px -15px 20px -15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .stat-card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .stat-card span { display: block; font-size: 22px; font-weight: bold; color: var(--shopee-red); }
-        .stat-card label { font-size: 12px; color: #777; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        h3 { margin-top: 0; color: #333; font-size: 16px; border-bottom: 2px solid var(--bg); padding-bottom: 10px; }
-        label { display: block; font-size: 13px; font-weight: bold; margin: 15px 0 5px; color: #555; }
-        select, input, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: #fafafa; }
-        .btn-send { background: var(--shopee-red); color: white; border: none; width: 100%; padding: 16px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 20px; box-shadow: 0 4px 10px rgba(238, 77, 45, 0.3); }
-        .btn-send:active { transform: scale(0.98); }
-        #log { font-size: 11px; color: #999; text-align: center; margin-top: 10px; }
+        :root { --shopee-orange: #ee4d2d; }
+        body { font-family: sans-serif; background-color: #f5f5f5; margin: 0; padding: 15px; }
+        .header { background: var(--shopee-orange); color: white; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 15px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .stats { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
+        .stat-box { background: white; padding: 10px; border-radius: 8px; flex: 1; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .stat-box b { color: var(--shopee-orange); font-size: 18px; display: block; }
+        label { display: block; font-size: 13px; font-weight: bold; margin: 10px 0 5px; color: #555; }
+        select, input, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ddd; font-size: 14px; box-sizing: border-box; }
+        .btn-send { background-color: var(--shopee-orange); color: white; border: none; font-weight: bold; cursor: pointer; padding: 15px; width: 100%; border-radius: 5px; font-size: 16px; }
+        #log { font-size: 12px; color: #888; text-align: center; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="header">SHOPEE BROADCAST ADMIN</div>
+<div class="header">SHOPEE BROADCAST PANEL</div>
 
-<div class="stat-grid">
-    <div class="stat-card"><span id="totalSub">0</span><label>Total User</label></div>
-    <div class="stat-card"><span id="targetCount">0</span><label>Target Filter</label></div>
+<div class="stats">
+    <div class="stat-box"><b id="totalSub">0</b> <small>Total User</small></div>
+    <div class="stat-box"><b id="targetCount">0</b> <small>Target</small></div>
 </div>
 
 <div class="card">
-    <h3>🎯 Segmentasi Target</h3>
-    
-    <label>Jenis Kelamin</label>
+    <label>🎯 Filter Gender</label>
     <select id="genderFilter" onchange="applyFilters()">
-        <option value="all">Semua (Pria & Wanita)</option>
-        <option value="pria">Pria Saja</option>
-        <option value="wanita">Wanita Saja</option>
+        <option value="all">Semua Gender</option>
+        <option value="pria">Pria</option>
+        <option value="wanita">Wanita</option>
     </select>
 
-    <label>Rentang Usia</label>
+    <label>📅 Filter Usia</label>
     <select id="ageFilter" onchange="applyFilters()">
         <option value="all">Semua Usia</option>
-        <option value="18-25">18 - 25 Tahun</option>
-        <option value="26-35">26 - 35 Tahun</option>
+        <option value="18-25">18-25 Tahun</option>
+        <option value="26-35">26-35 Tahun</option>
         <option value="36+">Diatas 35 Tahun</option>
     </select>
 </div>
 
 <div class="card">
-    <h3>✉️ Isi Notifikasi</h3>
+    <label>Judul Notifikasi</label>
+    <input type="text" id="title" placeholder="Contoh: Voucher Diskon 99%!">
 
-    <label>Judul Notif (Max 50 Karakter)</label>
-    <input type="text" id="title" placeholder="Contoh: Voucher 50RB Menantimu! 🎁">
+    <label>Isi Pesan</label>
+    <textarea id="body" rows="3" placeholder="Contoh: Ambil gratis ongkir sekarang..."></textarea>
 
-    <label>Pesan Notif</label>
-    <textarea id="body" rows="3" placeholder="Contoh: Ambil voucher gratis ongkir sekarang..."></textarea>
-
-    <label>Link Gambar Banner (URL)</label>
+    <label>Link Gambar (URL)</label>
     <input type="text" id="imgUrl" placeholder="https://domain.com/gambar.jpg">
 
     <label>Link Affiliate Shopee</label>
     <input type="text" id="affLink" placeholder="https://shope.ee/xxxxxx">
 
-    <button class="btn-send" onclick="broadcast()">KIRIM BROADCAST</button>
+    <button class="btn-send" onclick="broadcast()">KIRIM SEKARANG</button>
     <div id="log">Siap mengirim...</div>
 </div>
 
 <script>
-    // SECURITY: Password Admin Sederhana
+    // Password Admin
     const pass = prompt("Masukkan Password Admin:");
-    if (pass !== "shopee123") { // Ganti password ini
+    if (pass !== "shopee123") {
         alert("Akses Ditolak!");
         window.location.href = "index.html";
     }
 
-    // KONFIGURASI SUPABASE
-    const SB_URL = "https://zscupvelldysboqatuee.supabase.co";
-    const SB_KEY = "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR"; 
-    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+    // SUPABASE (Sama dengan index.html)
+    const mySupabase = supabase.createClient(
+        "https://zscupvelldysboqatuee.supabase.co",
+        "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR"
+    );
 
-    let allData = [];
+    let allUsers = [];
 
-    // 1. Ambil Data dari Supabase
-    async function fetchData() {
-        const { data, error } = await supabaseClient.from('subscriber').select('*');
+    async function loadData() {
+        const { data, error } = await mySupabase.from('subscriber').select('*');
         if (data) {
-            allData = data;
-            document.getElementById('totalSub').innerText = allData.length;
+            allUsers = data;
+            document.getElementById('totalSub').innerText = allUsers.length;
             applyFilters();
         }
     }
 
-    // 2. Filter Data Secara Real-time
     function applyFilters() {
         const g = document.getElementById('genderFilter').value;
         const a = document.getElementById('ageFilter').value;
-
-        const filtered = allData.filter(u => {
-            return (g === 'all' || u.gender === g) && (a === 'all' || u.age === a);
-        });
-
+        const filtered = allUsers.filter(u => (g === 'all' || u.gender === g) && (a === 'all' || u.age === a));
         document.getElementById('targetCount').innerText = filtered.length;
         return filtered;
     }
 
-    // 3. Kirim Broadcast via FCM
     async function broadcast() {
         const targets = applyFilters();
         const title = document.getElementById('title').value;
@@ -116,24 +103,23 @@
         const image = document.getElementById('imgUrl').value;
         const link = document.getElementById('affLink').value;
 
-        if (!title || !body || !link) return alert("Mohon lengkapi data!");
-        if (targets.length === 0) return alert("Target tidak ditemukan!");
+        if (!title || !body || !link) return alert("Mohon lengkapi judul, pesan, dan link!");
+        if (targets.length === 0) return alert("Tidak ada user dalam target ini.");
 
-        if (!confirm(`Kirim ke ${targets.length} user?`)) return;
+        if (!confirm(`Kirim notifikasi ke ${targets.length} user?`)) return;
 
-        let sent = 0;
-        document.getElementById('log').innerText = "Sedang mengirim...";
+        let success = 0;
+        document.getElementById('log').innerText = "Memulai broadcast...";
 
         for (const user of targets) {
-            if (!user.token || user.token === 'NO_TOKEN') continue;
-
+            if (!user.token) continue;
             try {
-                // KIRIM KE FIREBASE API
+                // KIRIM KE FIREBASE API (Legacy)
                 await fetch('https://fcm.googleapis.com/fcm/send', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'key=MASUKKAN_SERVER_KEY_LEGACY_DISINI'
+                        'Authorization': 'key=AIzaSyD_zJ9VxNeNZCBwaXpzgHbbfmw3Ymj5QTA' // GANTI DENGAN SERVER KEY LEGACY ANDA
                     },
                     body: JSON.stringify({
                         to: user.token,
@@ -142,21 +128,14 @@
                         priority: "high"
                     })
                 });
-                sent++;
-                document.getElementById('log').innerText = `Proses: ${sent} / ${targets.length}`;
-            } catch (err) { console.error("Gagal kirim ke 1 user"); }
+                success++;
+                document.getElementById('log').innerText = `Terkirim: ${success} / ${targets.length}`;
+            } catch (e) { console.error("Gagal kirim ke 1 user"); }
         }
-
-        alert(`Selesai! Berhasil mengirim ke ${sent} user.`);
-        document.getElementById('log').innerText = "Menunggu broadcast berikutnya...";
+        alert(`Broadcast Selesai! Berhasil terkirim ke ${success} user.`);
     }
 
-    fetchData();
-
-    // Registrasi SW untuk PWA
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('firebase-messaging-sw.js');
-    }
+    loadData();
 </script>
 </body>
 </html>
